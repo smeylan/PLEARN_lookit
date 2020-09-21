@@ -109,6 +109,7 @@ get_gaze_code_timings = function(gaze_code_path){
 get_timecourse_info_for_videos = function(base_video_path, frame_data_path, name_type, browser, gaze_code_path=NULL){
 	
 	video_paths = Sys.glob(paste(base_video_path,'/*.mp4', sep=''))	
+	video_paths = video_paths[-grep('_trimmed', video_paths)]
 	video_durations = do.call('rbind', lapply(video_paths, function(path){
 		get_video_durations(path, name_type)}))	
 	frame_events = get_frame_events(frame_data_path, browser)

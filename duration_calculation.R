@@ -42,3 +42,19 @@ plot_gaze_codes(gaze_code_path)
 # assuming that there is a correspondence between the begining of the participant video and the the begining of the stimulus video
 
 
+durations[,c('frame_id','mediainfo_audio_duration', 'mediainfo_video_duration')]
+sum(durations$mediainfo_audio_duration)
+sum(durations$mediainfo_video_duration) 
+
+durations$longest_duration = mapply(max, durations$mediainfo_audio_duration, durations$mediainfo_video_duration)
+durations$shortest_duration = mapply(min, durations$mediainfo_audio_duration, durations$mediainfo_video_duration)
+((sum(durations$longest_duration) / 60) -9) * 60 #over  by 1.45s
+((sum(durations$shortest_duration) / 60) -9) * 60 #under  by 13.8s
+
+# pairwise max of these mapp
+# video duration unless it is shorter than the audio duration, in which case audio duration
+
+sum(durations$mediainfo_video_duration[which(durations$mediainfo_video_duration > durations$mediainfo_audio_duration)],
+durations$mediainfo_audio_duration[which(durations$mediainfo_video_duration < durations$mediainfo_audio_duration)])
+sum(durations$mediainfo_audio_duration) # audio duration is much shorter
+
