@@ -3,10 +3,7 @@ import pandas as pd
 import numpy as np
 import glob
 import os
-
-data_path = '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/lookit_data/version1/jonah_pilot'
-filenames = glob.glob(os.path.join(data_path, "*.eaf"))
-print(filenames)
+import argparse
 
 def get_annots(eaf_path): 
     '''Get annoations from the EAF '''
@@ -56,7 +53,13 @@ def get_label_for_frames(annots, frames):
             print('frame has more than one corresponding annotation: '+str(frame['ms']))
             frame['label'] = None
         processed_frames.append(frame)
-    return(pd.DataFrame(processed_frames))
+    processed_frames_df = pd.DataFrame(processed_frames)
+    if validate_frames(processed_frames_df)
+        return(processed_frames_df)
+
+def validate_frames(processed_frames_df):
+    #!!! logic for validation requirements, allowable number of unlabled frames, goes here.
+    return (True)
 
 def read_eaf_to_table(eaf_path):
     '''Get a table representation of the default tier labels from an EAF'''
@@ -66,12 +69,54 @@ def read_eaf_to_table(eaf_path):
     return(labels[['ms','label']])
 
 
-all_processed_eaf = []
-for eaf_file in filenames:
-    df = read_eaf_to_table(eaf_file)
-    df['filename'] = os.path.basename(eaf_file)
-    all_processed_eaf.append(df)
-processed_df = pd.concat(all_processed_eaf)
-processed_df.to_csv(os.path.join(data_path, 'gaze_codes.csv'))
+def main(args): 
+    print(args)
+    import pdb
+    pdb.set_trace()
+    #!!! this is for one eaf file per video
+    #filenames = glob.glob(os.path.join(data_path, "*.eaf"))
+    
+    if args.session is not None:
+        filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', session, 'annotations','*.eaf'))        
+    else:
+        filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', '*', 'annotations','*.eaf'))
 
-# [ ]  Plearn_eaf should complain about durations of untagged video beyond a certain duration
+    if args.doublecode:
+        filenames  = [x for x in filenames if 'doublecode' in x]
+    else:
+        filenames  = [x for x in filenames if 'doublecode' not in x]
+    
+    
+    for eaf_file in filenames:
+        # [ ] !!! read in in the  corresponding timing metadata
+        # [ ] !!! read in the  correpsonding frame times
+
+
+        df = read_eaf_to_table(eaf_file)
+        df['filename'] = os.path.basename(eaf_file)
+        
+        if not args.validate: 
+            df.to_csv(os.path.join(data_path, 'gaze_codes.csv'))
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Sample labels for unique frames from an ELAN-tagged EAF file...')
+    parser.add_argument('--data_basepath',
+                           type=str,
+                           action='store',
+                           help='The data root for the project (should include lookit_data as a directory, containing folders corresponding to sessions) ')
+    parser.add_argument('--session',                       
+                           action='store',
+                           type=str,
+                           help='The session identifier under lookit-data to process. If unspecified, then all sessions in `lookit_data` will be processed.')
+    parser.add_argument('--validate',                       
+                           action='store_true',
+                           help='If this is a validation run, run the checks but do not output a file for gaze codes')
+
+    parser.add_argument('--doublecode',                       
+                           action='store_true',
+                           help='If sampling from an eaf doing double-coding, then include this flag so that the script checks for completion on double-coded trials only')
+    args = parser.parse_args()
+
+
+    main(args)

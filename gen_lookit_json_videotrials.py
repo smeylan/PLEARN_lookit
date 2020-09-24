@@ -10,10 +10,12 @@ test_trials_path = '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/lookit/group1_boo
 # receptive_trials_path = '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/lookit/plearn_receptiveTask_datasource.csv'
 order = "1"
 
+
 with open(input_lookit_json_path) as f:
   data = json.load(f)
 
 example_receptive_trial = data['frames']['sample-intermodal-trial-2']
+example_calibration_trial = data['frames']['sample-calibration-trial']
 # receptive_trials = pd.read_csv(receptive_trials_path)
 # receptive_trials = receptive_trials.loc[receptive_trials.order == int(order)]
 
@@ -21,7 +23,7 @@ example_receptive_trial = data['frames']['sample-intermodal-trial-2']
 gazetracking_practice_frames = []
 gazetracking_test_frames = []
 
-calibration_trial = copy.deepcopy(example_receptive_trial)
+calibration_trial = copy.deepcopy(example_calibration_trial)
 [calibration_trial.pop(x, None) for x in ['sources', 'altSources','musicSources']]
 calibration_trial['calibrationLength'] = 3000
 
@@ -30,11 +32,7 @@ for i in ['p1','p2','p3','p4'] + list(range(1,33)):
 	#for i in ['p1','p2'] + list(range(1,3)):
 	j +=1
 	receptive_trial = copy.deepcopy(example_receptive_trial)
-	receptive_trial['sources'] = str(i)
-	receptive_trial['altSources'] = str(i)
-	receptive_trial['calibrationLength'] = 0
-	receptive_trial['musicSources'] = str(i)	
-
+	receptive_trial['video']['source'] = str(i)
 	isPractice = 'p' in str(i) #practice vs. test
 	hasCalibration = ((j+ 3) % 4) == 0 # calibration vs. normal
 	
