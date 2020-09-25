@@ -25,18 +25,7 @@ def validate_annots(labels):
     if len(unknown_labels) > 0:
         raise ValueError('Unknown labels in annotation file: '+' '.join(unknown_labels))
 
-def get_frame_ts_for_video(video_path):
-    '''Get the timestamps for unique frames. These align with ELAN'''
-    ts_path = video_path.replace('.mp4','.time')
-    ffprobe_command = "ffprobe "+ video_path + " -select_streams v " \
-    + "-show_entries frame=coded_picture_number,pkt_pts_time -of " \
-    + "csv=p=0:nk=1 -v 0 > "+ts_path
-    os.system(ffprobe_command)
-    ts_table = pd.read_csv(ts_path, header=None)
-    ts_table = ts_table.rename(columns = {0:'ms',1:'unk'})
-    ts_table['ms'] = ts_table['ms'] * 1000
-    # I thought unk was frame indices, but the numbers are all over
-    return(ts_table[['ms']])
+
 
 def get_label_for_frames(annots, frames):
     '''Get a label from annots for each frame in frames'''

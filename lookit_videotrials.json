@@ -46,7 +46,7 @@
             "kind": "exp-lookit-video-consent",
             "PIName": "Dr. Elika Bergelson",
             "datause": "We are interested in what your child knows about basic grammatical rules in the English language, both what they say as well as what they seem to understand. A research assistant will watch the videos recorded from the first part of the experiment as your child looks at different objects onscreen; another will review the recording from when you and your child read the storybook together and annotate what your child said in response to questions you ask them.",
-            "payment": "After you finish the study, we will email you a $10 Amazon gift card within approximately three days. To be eligible for the gift card your child must be in the age range for this study, you need to submit a valid consent statement, and we need to see that there is a child with you. But we will send a gift card even if you do not finish the whole study or we are not able to use your child's data! There are no other direct benefits to you or your child from participating, but we hope you will enjoy the experience.",
+            "payment": "After you finish the study, we will email you a $10 Amazon gift card within a week. To be eligible for the gift card your child must be in the age range for this study, you need to submit a valid consent statement, and we need to see that there is a child with you. But we will send a gift card even if you do not finish the whole study or we are not able to use your child's data! There are no other direct benefits to you or your child from participating, but we hope you will enjoy the experience.",
             "purpose": "This study looks at what children between two and three years old know about basic grammatical distinctions in English.",
             "PIContact": "Dr. Stephan Meylan (on behalf of Dr. Bergelson) 727 278 1398",
             "procedures": "In this study, you and your child will view a series of videos, about 12 minutes long in total, where a speaker in the video will name new and familiar objects that will appear onscreen. Then you will read a 'storybook' to your child which has more new and familiar objects. For both parts, LookIt will record both video and audio through your web broswer. There will be more specific instructions for each portion of the study. There are no anticipated risks associated with participating.",
@@ -91,7 +91,7 @@
             "blocks": [
                 {
                     "title": "Part 1: Watch Some Videos",
-                    "text": "This experiment has two sections. In the first section, your child will watch a series of videos where someone will ask your child to find something onscreen. We will start with instructions for the videos, and return to the storybook in a second.",
+                    "text": "This experiment has two sections. In the first section, your child will watch a series of videos where someone will ask your child to find something onscreen. We will start with instructions for the videos, and return to instructions for the storybook after your child has completed the first part.",
                     "listblocks": [
                         {
                           "text": "You may decide how to best position you and your child in front of the camera. Ideally <b>your child will be centered in the video feed, facing towards the camera, and about two feet (one adult arm’s distance) away from the camera</b>. This makes it easier for us to tell where your child is looking on the screen during the videos. We will provide more instructions when it is time to get your child ready to participate."
@@ -103,13 +103,16 @@
                           "text": "<b>Please do not repeat back the new words or phrases.</b> If your child becomes distracted, you may say something like, \"let's watch the video!\""
                         },
                          {
+                            "text": "We will tell you, by audio, when we are 1/4, 1/2, and 3/4 through the videos."
+                        },
+                         {
                             "text": "If you need to stop for any reason during the videos just press the space bar. This will pause the experiment for as long as you need."
                         }
                         
                     ]
                 },
                 {
-                    "text" : "On the next page we will explain the storybook task. When you are ready to learn about that, click Next."
+                    "text" : "When you are ready, click Next to test your audio."
                 }
             ],
             "nextButtonText": "Next",
@@ -142,7 +145,9 @@
             "kind": "exp-lookit-video",
             "video": {
               "loop": false,
-              "source": "16"
+              "source": "16",
+              "left": 0,
+              "width": 100
             },
             "requiredDuration": 0,
             "requireAudioCount": 0,
@@ -169,7 +174,9 @@
             "kind": "exp-lookit-video",
             "video": {
               "loop": false,
-              "source": "5"
+              "source": "5",
+              "left": 0,
+              "width": 100
             },
             "requiredDuration": 0,
             "requireAudioCount": 0,
@@ -256,43 +263,6 @@
                "mp4"
            ]
        },
-         "instructions-storybook-intro": {
-            "kind": "exp-lookit-instructions",
-            "blocks": [
-                {
-                    "title": "Part 2: Read a Storybook",
-                    "text": "In the second part of this experiment, you and your child will read a storybook together. The goal of the storybook is to get your child to name the animals and objects that appear on the pages. In each case, you will name one first. <b>We will show you these instructions again as a reminder at the beginning of the storybook section,</b> but again we wanted to give you the instructions now so that you can take time to read them slowly.",
-                    "listblocks": [
-                        {
-                            "text": "We need to be able to <b>hear both you and your child</b>, so stay close to the microphone."
-                        },
-                        {
-                            "text": "Each storybook page will have written text at the bottom. Please read this text to your child <b>as you might normally read a storybook together</b>."
-                        },
-                        {
-                            "text": "Some storybook pages will have familiar objects and animals on them. Other pages will have <b>new objects and animals</b> that neither you nor your child have never heard of before, because we made them up. Just a heads up so they don't surprise you! If you are unsure how to pronounce it, <b>your best guess about pronunciation is fine.</b>"
-                        },
-                        {
-                            "text": "Whenever there is <b>one of an object or animal</b> onscreen, feel free to improvise to engage your child (look, a dog!). Whenever there are <b>two of an object or animal</b> onscreen, please read the text below exactly as written. You may repeat it if necessary."
-                        },
-                        {
-                            "text": "Whatever your child's respose, please respond to them with <b>\"great job!\"</b>. If they provide a different name for an object before you read it (for example, \"jacket\" when the storybook says \"coat\"), you may proceed using the child's word. <b>Please do not correct your child's response, or ask your child to count the objects onscreen.</b>"
-                        },
-                        {
-                            "text": "If your child is giving you the silent treatment or is temporarily fussy (such that you think they might get into the story if you keep going), you can <b>move on after about 15 seconds</b> on each page (by your judgment)."
-                        }
-
-                       
-                    ]
-                },
-                {
-                    "text": "There's more information on the next page, so when you are ready click Next."
-                }
-            ],
-            "showWebcam": false,            
-            "nextButtonText": "Next",
-            "displayFullscreenOverride": true            
-        },
         "instructions-storybook-addition": {
             "kind": "exp-lookit-instructions",
             "blocks": [
@@ -351,7 +321,7 @@
           "showWebcam": true,
           "webcamBlocks": [
             {
-              "title": "Make sure we can see you",
+              "title": "Make sure we can see you and your child",
               "listblocks": [
                 {
                   "text": "Take a look at your webcam view above. Get comfy, and adjust your own position or the computer as needed so both you and your child are visible."
@@ -368,12 +338,12 @@
           "nextButtonText": "Start the Videos",
           "displayFullscreenOverride": true
         },
-        "instructions-storybook-repeat": {
+        "instructions-storybook": {
           "kind": "exp-lookit-instructions",
             "blocks": [
               {
                   "title": "Part 2: Read a Storybook",
-                  "text": " As a reminder, in this second (and final) part of this experiment, you and your child will read a storybook together. The goal of the storybook is to get your child to name the animals and objects that appear on the pages. In each case, you will name an object or animal, and get them to say the name of the animal. You will then ask them to provide a name for two of that object or thing.",
+                  "text": " In this second (and final) part of this experiment, you and your child will read a storybook together. The goal of the storybook is to get your child to name the animals and objects that appear on the pages. In each case, you will name an object or animal, and get them to say the name of the animal. You will then ask them to provide a name for two of that object or thing.",
                   "listblocks": [
                       {
                           "text": "Each storybook page will have written text at the bottom. Please read this text to your child <b>as you might normally read a storybook together</b>."
@@ -546,7 +516,7 @@
                 "webm",
                 "mp4"
             ],
-            "video": "attentiongrabber",
+            "video": "uploading",
             "displayFullscreen": true
         },
         "end-video": {
@@ -581,10 +551,115 @@
                "mp4"
            ]
        },
+       "gazetracking-quarter-finished": {
+           "kind": "exp-lookit-video",
+           "video": {
+               "top": 10,
+               "left": 0,
+               "loop": false,
+               "width": 80,
+               "source": "white_6s",
+               "position": "fill"
+           },
+           "audio":{
+              "source": "quarter_finished"
+           },
+           "backgroundColor": "white",
+           "autoProceed": true,
+           "parentTextBlock": {
+               "text": "If your child needs a break, just press Space to pause!"
+           },
+           "requiredDuration": 0,
+           "requireAudioCount": 0,
+           "requireVideoCount": 1,
+           "restartAfterPause": true,
+           "pauseKey": " ",
+           "pauseKeyDescription": "space",
+           "pauseAudio": "pause",
+           "pauseVideo": "attentiongrabber",
+           "pauseText": "(You'll have a moment to get ready before recording starts again.)",
+           "unpauseAudio": "return_after_pause",
+           "doRecording": false,
+           "baseDir": "https://umzy19bu4.ddns.net/plearn/order1/",           
+           "videoTypes": [
+               "webm",
+               "mp4"
+           ]
+       },
+       "gazetracking-half-finished": {
+           "kind": "exp-lookit-video",
+           "video": {
+               "top": 10,
+               "left": 0,
+               "loop": false,
+               "width": 80,
+               "source": "white_6s",
+               "position": "fill"
+           },
+           "audio":{
+              "source": "half_finished"
+           },
+           "backgroundColor": "white",
+           "autoProceed": true,
+           "parentTextBlock": {
+               "text": "If your child needs a break, just press Space to pause!"
+           },
+           "requiredDuration": 0,
+           "requireAudioCount": 0,
+           "requireVideoCount": 1,
+           "restartAfterPause": true,
+           "pauseKey": " ",
+           "pauseKeyDescription": "space",
+           "pauseAudio": "pause",
+           "pauseVideo": "attentiongrabber",
+           "pauseText": "(You'll have a moment to get ready before recording starts again.)",
+           "unpauseAudio": "return_after_pause",
+           "doRecording": false,
+           "baseDir": "https://umzy19bu4.ddns.net/plearn/order1/",           
+           "videoTypes": [
+               "webm",
+               "mp4"
+           ]
+       },
+       "gazetracking-threequarters-finished": {
+           "kind": "exp-lookit-video",
+           "video": {
+               "top": 10,
+               "left": 0,
+               "loop": false,
+               "width": 80,
+               "source": "white_6s",
+               "position": "fill"
+           },
+           "audio":{
+              "source": "threequarters_finished"
+           },
+           "backgroundColor": "white",
+           "autoProceed": true,
+           "parentTextBlock": {
+               "text": "If your child needs a break, just press Space to pause!"
+           },
+           "requiredDuration": 0,
+           "requireAudioCount": 0,
+           "requireVideoCount": 1,
+           "restartAfterPause": true,
+           "pauseKey": " ",
+           "pauseKeyDescription": "space",
+           "pauseAudio": "pause",
+           "pauseVideo": "attentiongrabber",
+           "pauseText": "(You'll have a moment to get ready before recording starts again.)",
+           "unpauseAudio": "return_after_pause",
+           "doRecording": false,
+           "baseDir": "https://umzy19bu4.ddns.net/plearn/order1/",           
+           "videoTypes": [
+               "webm",
+               "mp4"
+           ]
+       },
         "exit-survey": {
             "kind": "exp-lookit-exit-survey",
             "debriefing": {
-                "text": "In this study, we look at what children know about the English singular and plural, for example dog vs. dogs, and cat vs. cats. While this is a common distinction made by adult speakers, as well as older children, when children first begin to understand this distinction is an important open question in child language research. Specifically, it is important because it is one of the first times that children learn to combine words and , including new words that they have never heard before: if an object is called 'a wug', then two of those things are called 'wugs'. While children end up learning many such rules, this may be the first one, so it is important to learn when they start to understand it in speech from others, as well as how they use it in their own speech.<br><br> Previous studies point to a surprising result:  English-learning children use the plural in their own speech (like in the storybook) before they 'understand' it -- that is, can successfully identify what a speaker is talking about (like in the videos here).  The key to this counter-intuitive result may be that children can use the plural to identify what a speaker is talking about  <i>only</i>  when there are other parts of the sentence that correspond to number ('there <b>are</b> <b>two</b> dogs'), and it might take them a while to learn that the presence of an 's' indicates the plural. This would mean that children are learning grammar first, then using that to learn the sound system! This is backwards from what researchers first thought (children learn sounds, then words, then grammar). If you want to watch a 5-minute scientific talk on a previous version of this experiment, look at this <a href=\"https://www.youtube.com/watch?v=pWF743dBlTI\" target=\"_blank\">YouTube video</a>. <br><br> Thanks again for your participation! We will email you a $10 Amazon gift card within approximately three days. To be eligible for the gift card your child must be in the age range for this study, you need to submit a valid consent statement, and we need to see that there is a child with you. But we will send a gift card even if you do not finish the whole study or we are not able to use your child's data!",
+                "text": "In this study, we look at what children know about the English singular and plural, for example dog vs. dogs, and cat vs. cats. While this is a common distinction made by adult speakers, as well as older children, when children first begin to understand this distinction is an important open question in child language research. Specifically, it is important because it is one of the first times that children learn to apply rules to words, including new words that they have never heard before. In this case, if an object is called 'a wug', then two of those things are called 'wugs'. While children end up learning many such rules, this may be the first one, so it is important to learn when they start to understand it in speech from others, as well as how they use it in their own speech.<br><br> Previous studies point to a surprising result:  English-learning children use the plural in their own speech (like in the storybook) before they 'understand' it -- that is, can successfully identify what a speaker is talking about (like in the videos here).  The key to this counter-intuitive result may be that children can use the plural to identify what a speaker is talking about  <i>only</i>  when there are other parts of the sentence that correspond to number ('there <b>are</b> <b>two</b> dogs'), and it might take them a while to learn that the presence of an 's' indicates the plural. This would mean that children are learning grammar first, then using that to learn the sound system! This is backwards from what researchers first thought (children learn sounds, then words, then grammar). If you want to watch a 5-minute scientific talk on a previous version of this experiment, look at this <a href=\"https://www.youtube.com/watch?v=pWF743dBlTI\" target=\"_blank\">YouTube video</a>. <br><br> Thanks again for your participation! We will email you a $10 Amazon gift card within one week of participation. To be eligible for the gift card your child must be in the age range for this study, you need to submit a valid consent statement, and we need to see that there is a child with you. But we will send a gift card even if you do not finish the whole study or we are not able to use your child's data!",
                 "title": "Thank you!"
             },
             "showShareButton": false
@@ -594,9 +669,7 @@
         "signpost",
         "video-config",
         "video-consent",
-        "instructions-gazetracking",
-        "instructions-storybook-intro",
-        "positioning-instructions",
+        "instructions-gazetracking",        
         "audio-test-at-start",
         "positioning-instructions",
         "start-video",

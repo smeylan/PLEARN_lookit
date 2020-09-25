@@ -57,31 +57,40 @@ for i in ['p1','p2','p3','p4'] + list(range(1,33)):
 		gazetracking_test_frames.append(frame_name)
 		data['frames'][frame_name] = receptive_trial
 
-	if j == 16: 
+	if (j - 4) == 8:
+		gazetracking_test_frames.append('gazetracking-quarter-finished')
+
+	if (j - 4) == 16: 
 		# add 2 frames for a position check at the end of the 16th test trial
+		gazetracking_test_frames.append('gazetracking-half-finished')
+
+	if (j - 4) == 17: 	
 		gazetracking_test_frames.append('gazetracking-position-check-video')
 		gazetracking_test_frames.append('gazetracking-position-check')
+
+	if (j - 4) == 24:
+		gazetracking_test_frames.append('gazetracking-threequarters-finished')
+
 
 
 data['sequence'] = [
 		"signpost",
         "video-config",
         "video-consent",
-        "instructions-gazetracking",
-        "instructions-storybook-intro",
+        "instructions-gazetracking",        
         "audio-test-at-start",
         "positioning-instructions",                
         "start-video"] + gazetracking_practice_frames + \
         ["end-practice-begin-test-video"] + \
         gazetracking_test_frames + \
         ["end-gazetracking-begin-storybook-video", 
-        "instructions-storybook-repeat",        
+        "instructions-storybook",        
         "instructions-storybook-addition",        
         "storybook-positioning-test",        
         'start-video-recording',
         "storybook-plearn",
-        "stop-video-capture",
         "end-video",
+        "stop-video-capture",        
         "exit-survey"]
 
 # Storybook / Expressive task
@@ -130,8 +139,11 @@ for trial_record in trial_records.to_dict('records'):
 	if i == 1:
 		storybook_trial['parentTextBlock']['title'] = "For parent/caregiver:"
 	else:
-		storybook_trial['parentTextBlock']['title'] = ""
-
+		if isPractice:
+			storybook_trial['parentTextBlock']['title'] = str(i)+' of 20' 
+		else: 
+			storybook_trial['parentTextBlock']['title'] = str(i)+'A of 20' 
+	
 	#if i in range(1,3) or i in range(5,7) :
 	generated_trials.append(copy.deepcopy(storybook_trial))
 	
@@ -139,6 +151,7 @@ for trial_record in trial_records.to_dict('records'):
 		# generate page 2		
 		storybook_trial = example_storybook_trial.copy()
 		storybook_trial['images'][0]['src'] = 'https://umzy19bu4.ddns.net/plearn/order'+order+'/img/'+str(i)+'_'+trial_record['s_form']+'_1.png'		
+		storybook_trial['parentTextBlock']['title'] = str(i)+'B of 20' 
 		storybook_trial['parentTextBlock']['text'] = "What's here?"
 		storybook_trial['images'][0]['id'] = 'storybook_'+str(i)+'_2'
 		#if i in range(5,7):				
@@ -150,9 +163,9 @@ storybook_trial = example_storybook_trial.copy()
 storybook_trial['images'][0]['id'] = 'storybook_end'
 storybook_trial['images'][0]['src'] = 'https://umzy19bu4.ddns.net/plearn/order'+order+'/img/20_the_end.png'
 #storybook_trial['endSessionRecording'] = True # end of recordings will now be in a separate frame of type stop-recording-with-video
+storybook_trial['parentTextBlock']['title'] = ''
 storybook_trial['parentTextBlock']['text'] = "The end! Great job!"
 generated_trials.append(copy.deepcopy(storybook_trial))
-
 data['frames']['storybook-plearn']['frameList'] = generated_trials
 
 

@@ -23,6 +23,20 @@ def buffer_video_audio_durations(filepath):
 	print(command)
 	subprocess.call(command.split(' '))
 
+def get_frame_ts_for_video(video_path):
+    '''Get the timestamps for unique frames. These align with ELAN'''
+    ts_path = video_path.replace('.mp4','.time')
+    ffprobe_command = "ffprobe "+ video_path + " -select_streams v " \
+    + "-show_entries frame=coded_picture_number,pkt_pts_time -of " \
+    + "csv=p=0:nk=1 -v 0 > "+ts_path
+    os.system(ffprobe_command)
+    ts_table = pd.read_csv(ts_path, header=None)
+    ts_table = ts_table.rename(columns = {0:'ms',1:'unk'})
+    ts_table['ms'] = ts_table['ms'] * 1000
+    ts_table.to_csv(ts_path, index=False)
+    # I thought unk was frame indices, but the numbers are all over
+    return(ts_table)
+
 def concat_mp4s(input_video_paths, output_video_path, method):
 	
 	if method == 'reencode':
@@ -137,14 +151,14 @@ def process_session(data_basepath, session, trim_videos = False, expected_number
 
 	# do the actual concatenation
 	output_video_path = os.path.join(data_basepath, 'lookit_data', session, 'processed', session+'.mp4')	
-	concat_mp4s(combined_df.file, output_video_path, encoding_method)
+	#concat_mp4s(combined_df.file, output_video_path, encoding_method)
 	
 	# write out the metadata
 	output_metadata_path = os.path.join(data_basepath, 'lookit_data', session, 'processed', session+'.csv')
 	participant_videos_df.to_csv(output_metadata_path)
 
-	import pdb
-	pdb.set_trace()	
+	# get the unique frame timestamps
+	get_frame_ts_for_video(output_video_path)
 
 	print('Time difference: '+str(round(abs(get_duration(output_video_path) - participant_videos_df.tail(1).iloc[0].end_time), 3))+' seconds')
 	
