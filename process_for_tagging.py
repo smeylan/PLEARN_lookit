@@ -6,25 +6,23 @@ import subprocess
 import numpy as np
 import argparse
 
+# usage python3 process_for_tagging.py --data_basepath /Users/stephanmeylan/Nextcloud2/MIT/PLEARN/ --session timed_pilot --buffervideo /Users/stephanmeylan/Nextcloud2/MIT/PLEARN/video_cutter/white_2s.mp4
+
 def get_duration(filname):
+	'''get the duration to 3 decimal seconds for the filename'''
 	command = "ffprobe -i "+filname+" -show_format -v quiet | sed -n 's/duration=//p'"
 	result = subprocess.run(command, stdout=subprocess.PIPE, shell=True)
 	rval = float(result.stdout.decode('utf-8').replace('\n',''))
 	return(rval)	
 
 def trim_video_audio_durations(filepath):
+	'''cut audio or video to the shortest of the two'''
 	command = 'ffmpeg -y -i '+filepath+' -map 0 -c copy -fflags +shortest -max_interleave_delta 0 '+filepath.replace('.mp4','_trimmed.mp4')
 	print(command)
 	subprocess.call(command.split(' '))
 
-def buffer_video_audio_durations(filepath):
-	#command = 'ffmpeg -y -i '+filepath+' -map 0 -c copy -fflags +shortest -max_interleave_delta 0 '+filepath.replace('.mp4','_buffered.mp4')
-	command = 'ffmpeg -y -i '+filepath+' -map 0 -c copy -fflags +shortest -max_interleave_delta 0 '+filepath.replace('.mp4','_buffered.mp4')
-	print(command)
-	subprocess.call(command.split(' '))
-
 def get_frame_ts_for_video(video_path):
-    '''Get the timestamps for unique frames. These align with ELAN'''
+    '''Get the timestamps for unique frames'''
     ts_path = video_path.replace('.mp4','.time')
     ffprobe_command = "ffprobe "+ video_path + " -select_streams v " \
     + "-show_entries frame=coded_picture_number,pkt_pts_time -of " \
@@ -34,7 +32,6 @@ def get_frame_ts_for_video(video_path):
     ts_table = ts_table.rename(columns = {0:'ms',1:'unk'})
     ts_table['ms'] = ts_table['ms'] * 1000
     ts_table.to_csv(ts_path, index=False)
-    # I thought unk was frame indices, but the numbers are all over
     return(ts_table)
 
 def concat_mp4s(input_video_paths, output_video_path, method):
@@ -63,9 +60,7 @@ def concat_mp4s(input_video_paths, output_video_path, method):
 		print(' '.join(concat_command))
 		subprocess.call(concat_command)
 
-
 	if method == 'chain':
-		# generate 2s lead-in text videos for reference
 		
 		filenames = pd.DataFrame({'file':['file '+ x for x in input_video_paths]})
 		filenames.to_csv('input.txt', header = False, index = False)
@@ -123,7 +118,7 @@ def process_session(data_basepath, session, trim_videos = False, expected_number
 
 	transition_clips = [] 
 	for i in range(len(mp4_df.file)):
-		transition_clips.append(make_transition_clip(transition_bg_mov_path= '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/video_cutter/white_2s.mp4', txt=os.path.basename(mp4_df.file[i]).replace('_','_\n'), duration =2, screensize = example_video.size, output_path= os.path.join(transitions_dir,str(i)+'.mp4'),
+		transition_clips.append(make_transition_clip(transition_bg_mov_path= args.buffervideo, txt=os.path.basename(mp4_df.file[i]).replace('_','_\n'), duration =2, screensize = example_video.size, output_path= os.path.join(transitions_dir,str(i)+'.mp4'),
 			regenerate = False)) 
 
 	transitions_df = pd.DataFrame({"file" : transition_clips})
@@ -151,7 +146,7 @@ def process_session(data_basepath, session, trim_videos = False, expected_number
 
 	# do the actual concatenation
 	output_video_path = os.path.join(data_basepath, 'lookit_data', session, 'processed', session+'.mp4')	
-	#concat_mp4s(combined_df.file, output_video_path, encoding_method)
+	concat_mp4s(combined_df.file, output_video_path, encoding_method)
 	
 	# write out the metadata
 	output_metadata_path = os.path.join(data_basepath, 'lookit_data', session, 'processed', session+'.csv')
@@ -162,15 +157,6 @@ def process_session(data_basepath, session, trim_videos = False, expected_number
 
 	print('Time difference: '+str(round(abs(get_duration(output_video_path) - participant_videos_df.tail(1).iloc[0].end_time), 3))+' seconds')
 	
-	participant_videos_df.tail(1).end_time
-
-
-	# timing integrity checks
-	#total_duration_inputs = np.sum(mp4_df['durations'])
-	#buffer_video = VideoFileClip(buffer_vid_path)
-	#videos_to_code = [VideoFileClip(x) for x in mp4_df.file]
-	#joined_files =  concatenate_videoclips(videos_to_code[0:5], method='compose', transition=buffer_video)
-	#joined_files.write_videofile(output_video_path,  codec='libx264', audio=True, audio_codec='aac')
 
 def main(args):
 
@@ -178,6 +164,7 @@ def main(args):
 		session_dirs = [os.path.join(args.data_basepath, 'lookit_data', args.session)]
 		sessions = [args.session]
 	else:
+		raise NotImplementedError # not tested yet; need more participants to test
 		session_dirs = os.listdir(os.path.join(args.data_basepath, 'lookit_data'))
 		sessions = [basepath(x) for x in session_dirs]
 
@@ -195,5 +182,9 @@ if __name__ == '__main__':
                            action='store',
                            type=str,
                            help='The session identifier under lookit-data to process. If unspecified, then all sessions in `lookit_data` will be processed.')    
+    parser.add_argument('--buffervideo',                       
+                           action='store',
+                           type=str,
+                           help='Path to the buffer video that will have trial labels superimposed')    
     args = parser.parse_args()
     main(args)
