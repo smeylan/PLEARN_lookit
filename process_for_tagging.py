@@ -8,18 +8,57 @@ import argparse
 
 # usage python3 process_for_tagging.py --data_basepath /Users/stephanmeylan/Nextcloud2/MIT/PLEARN/ --session timed_pilot --buffervideo /Users/stephanmeylan/Nextcloud2/MIT/PLEARN/video_cutter/white_2s.mp4
 
-def get_duration(filname):
-	'''get the duration to 3 decimal seconds for the filename'''
-	command = "ffprobe -i "+filname+" -show_format -v quiet | sed -n 's/duration=//p'"
-	result = subprocess.run(command, stdout=subprocess.PIPE, shell=True)
-	rval = float(result.stdout.decode('utf-8').replace('\n',''))
-	return(rval)	
+def change_fps(input_filename, fps, regenerate = False):	
+	output_filename = input_filename.replace('/raw/','/fps_matched/')	
+	if os.path.exists(output_filename) and  regenerate == False:
+		print('Not regenerating '+output_filename)
+	else:
+		fps_command = ['ffmpeg', '-y', '-i', input_filename, '-filter:v', 'fps=fps='+str(fps), '-max_muxing_queue_size', '9999', output_filename]
+		print(' '.join(fps_command))
+		subprocess.call(fps_command)
 
-def trim_video_audio_durations(filepath):
+def get_duration(filename, method):
+	'''get the duration to 3 decimal seconds for the filename'''
+	# not sure what the difference in times between ffmprobe and mediainfo are
+	if method == 'ffprobe':
+		command = "ffprobe -i "+filename+" -show_format -v quiet | sed -n 's/duration=//p'"
+		result = subprocess.run(command, stdout=subprocess.PIPE, shell=True)
+		rval = float(result.stdout.decode('utf-8').replace('\n',''))
+		return(rval)	
+	elif method in ('mediainfo-video', 'mediainfo-audio'):
+		
+		if method == 'mediainfo-video':
+			duration_command = 'mediainfo --Inform="Video;%Duration/String3%" ' + "-of default=noprint_wrappers=1:nokey=1 " + filename    
+		else: 
+			duration_command = 'mediainfo --Inform="Audio;%Duration/String3%" ' + "-of default=noprint_wrappers=1:nokey=1 " +  filename
+
+		result = subprocess.run(duration_command, stdout=subprocess.PIPE, shell=True)
+		mi_str = result.stdout.decode('utf-8').replace('\n','')
+		video_components = mi_str.split(':')
+		hours = video_components[0]
+		minutes = video_components[1]
+		seconds = video_components[2]    
+		if hours == '00':
+			hours = '0'
+		if minutes == '00':
+			minutes = '0' 
+		mediainfo_video_duration = ((float(hours) * 60 * 60) + (float(minutes) * 60) + float(seconds))
+		return(mediainfo_video_duration)		
+	else:
+		raise ValueError('Method must be one of mediainfo or ffprobe')
+
+def trim_video_audio_durations(input_filename, regenerate):
 	'''cut audio or video to the shortest of the two'''
-	command = 'ffmpeg -y -i '+filepath+' -map 0 -c copy -fflags +shortest -max_interleave_delta 0 '+filepath.replace('.mp4','_trimmed.mp4')
-	print(command)
-	subprocess.call(command.split(' '))
+	output_filename = input_filename.replace('/fps_matched/','/trimmed/')	
+	if os.path.exists(output_filename) and  regenerate == False:
+		print('Not re-triimming '+output_filename)
+	else:
+		#command = 'ffmpeg -y -i '+input_filename+' -map 0 -c copy -fflags +shortest -max_interleave_delta 0 '+output_filename
+		
+		# this should take cut audio to video length, and pad audio to match video otherwise		
+		command = 'ffmpeg -y -i '+input_filename+' -c:v copy -af apad -shortest '+output_filename				
+		print(command)
+		subprocess.call(command.split(' '))
 
 def get_frame_ts_for_video(video_path):
     '''Get the timestamps for unique frames'''
@@ -34,8 +73,8 @@ def get_frame_ts_for_video(video_path):
     ts_table.to_csv(ts_path, index=False)
     return(ts_table)
 
-def concat_mp4s(input_video_paths, output_video_path, method):
-	
+def concat_mp4s(input_video_paths, output_video_path, method):	
+
 	if method == 'reencode':
 		concat_command = ['ffmpeg','-y']#[paths.FFMPEG]
 		inputList = ''
@@ -53,8 +92,14 @@ def concat_mp4s(input_video_paths, output_video_path, method):
 		concat_command = concat_command + ['-filter_complex', inputList + 'concat=n={}:v=1:a={}'.format(len(input_video_paths), 1) + '[out]',
 			'-map', '[out]', output_video_path, '-loglevel', 'error', "-c:v", "libx264", "-preset", "fast",
 			"-b:v", "3000k", "-maxrate", "3000k", "-bufsize", "3000k",
-			"-f", "s16le", "-acodec",  "pcm_s16le", "-b:a", "256k"]
-			#"-c:a", "libfdk_aac", "-b:a", "256k"]
+			"-b:a", "256k", "-f", "s16le", "-acodec",  "pcm_s16le"]
+
+		# no audio for testing duration
+		# concat_command = concat_command + ['-filter_complex', inputList + 'concat=n={}:v=1:a={}'.format(len(input_video_paths), 1) + '[out]',
+		# 	'-map', '[out]', output_video_path, '-loglevel', 'error', "-c:v", "libx264", "-preset", "fast",
+		# 	"-b:v", "3000k", "-maxrate", "3000k", "-bufsize", "3000k", "-an"]
+		#"-b:a", "256k", "-f", "s16le", "-acodec",  "pcm_s16le"]
+		#"-c:a", "libfdk_aac", "-b:a", "256k"]
 
 		print('Concat command:')
 		print(' '.join(concat_command))
@@ -67,10 +112,12 @@ def concat_mp4s(input_video_paths, output_video_path, method):
 		concat_command = 'ffmpeg -y -f concat -safe 0 -i input.txt -c copy '+output_video_path
 		subprocess.call(concat_command.split(' '))
 
-def make_transition_clip(transition_bg_mov_path, txt, duration, screensize, output_path, regenerate):
+def make_transition_clip(transition_bg_mov_path, fps, txt, duration, screensize, output_path, regenerate = False):
 	
-	if os.path.exists(output_path) and regenerate == False:
-		return(output_path)
+	temp_output_path = output_path.replace('.mp4', '_temp.mp4')
+
+	if os.path.exists(temp_output_path) and regenerate == False:
+		return(temp_output_path)
 	else:
 		transition_bg_mov = VideoFileClip(transition_bg_mov_path)
 		transition_bg_mov = transition_bg_mov.set_duration(duration)
@@ -81,25 +128,43 @@ def make_transition_clip(transition_bg_mov_path, txt, duration, screensize, outp
 
 		cvc = CompositeVideoClip( [transition_bg_mov, txtClip.set_pos('center')], size=screensize)
 
-		cvc.write_videofile(output_path)
+		cvc.write_videofile(temp_output_path, fps=fps)
+
+		# maake sure audio and video are matched in duration
+		command = 'ffmpeg -y -i '+temp_output_path+' -c:v copy -af apad -shortest '+output_path
+		print(command)
+		subprocess.call(command.split(' '))
+
 		return(output_path)
 
 
-def process_session(data_basepath, session, trim_videos = False, expected_number_of_trials = 45, encoding_method = 'reencode'):
+def process_session(data_basepath, session, trim_videos = True, expected_number_of_trials = 45, encoding_method = 'reencode'):
 
-	processed_dir = os.path.join(data_basepath, 'lookit_data', session, 'processed')
-	if not os.path.exists(processed_dir):
-		os.makedirs(processed_dir)
+	FPS = 30
+	REGENERATE = True
+
 	
+	for dir in ['processed', 'fps_matched', 'trimmed']:
+		dir_to_create = os.path.join(data_basepath, 'lookit_data', session, dir)
+		if not os.path.exists(dir_to_create):
+			os.makedirs(dir_to_create)
+
 	gazetracking_mp4s = [x for x in glob.glob(os.path.join(data_basepath, 'lookit_data', session, 'raw','*gazetracking*.mp4'))  if 'trimmed' not in x] 
+
+	# match fps
+	[change_fps(x, FPS, regenerate = True) for x in gazetracking_mp4s]
+	gazetracking_mp4s = glob.glob(os.path.join(data_basepath, 'lookit_data', session, 'fps_matched','*gazetracking*.mp4'))
 
 	# match video and audio duration before concatenating
 	if trim_videos:
-		[trim_video_audio_durations(x) for x in gazetracking_mp4s]
-		gazetracking_mp4s = [x for x in glob.glob(os.path.join(data_basepath, 'lookit_data', session, 'raw','*gazetracking*.mp4'))  if 'trimmed' in x] 
+		[trim_video_audio_durations(x, regenerate = True) for x in gazetracking_mp4s]
+		gazetracking_mp4s = glob.glob(os.path.join(data_basepath, 'lookit_data', session, 'trimmed','*gazetracking*.mp4'))
 
 	mp4_df = pd.DataFrame({"file" : gazetracking_mp4s})
-	mp4_df['duration'] = [get_duration(x) for x in mp4_df.file]
+	mp4_df['ffprobe_duration'] = [get_duration(x, 'ffprobe') for x in mp4_df.file]
+	mp4_df['mediainfo_video_duration'] = [get_duration(x, 'mediainfo-video') for x in mp4_df.file]
+	mp4_df['mediainfo_audio_duration'] = [get_duration(x, 'mediainfo-audio') for x in mp4_df.file]
+
 	mp4_df['type'] = 'participant_recording'
 
 	if mp4_df.shape[0] != expected_number_of_trials:
@@ -118,11 +183,13 @@ def process_session(data_basepath, session, trim_videos = False, expected_number
 
 	transition_clips = [] 
 	for i in range(len(mp4_df.file)):
-		transition_clips.append(make_transition_clip(transition_bg_mov_path= args.buffervideo, txt=os.path.basename(mp4_df.file[i]).replace('_','_\n'), duration =2, screensize = example_video.size, output_path= os.path.join(transitions_dir,str(i)+'.mp4'),
-			regenerate = False)) 
+		transition_clips.append(make_transition_clip(transition_bg_mov_path= args.buffervideo, fps=FPS, txt=os.path.basename(mp4_df.file[i]).replace('_','_\n'), duration =2, screensize = example_video.size, output_path= os.path.join(transitions_dir,str(i)+'.mp4'),
+			regenerate = True)) 
 
 	transitions_df = pd.DataFrame({"file" : transition_clips})
-	transitions_df['duration'] = [get_duration(x) for x in transitions_df.file]
+	transitions_df['ffprobe_duration'] = [get_duration(x, 'ffprobe') for x in transitions_df.file]
+	transitions_df['mediainfo_video_duration'] = [get_duration(x, 'mediainfo-video') for x in transitions_df.file]	
+	transitions_df['mediainfo_audio_duration'] = [get_duration(x, 'mediainfo-audio') for x in transitions_df.file]	
 	transitions_df['type'] = 'transition_video'
 
 	#intersperse the transition clips and the real clips
@@ -130,14 +197,14 @@ def process_session(data_basepath, session, trim_videos = False, expected_number
 	participant_recording_records = mp4_df.to_dict('records') 
 	if len(participant_recording_records) != len(transition_records):
 		raise ValueError('There should be an equal number of participant recordings as transition videos')
-
+		
 	combined = []
 	for i in range(len(participant_recording_records)):
 		combined.append(transition_records[i])
 		combined.append(participant_recording_records[i])
 
 	combined_df = pd.DataFrame(combined)
-	combined_df['end_time']  =   np.cumsum(combined_df['duration'])
+	combined_df['end_time']  =   np.cumsum(combined_df['ffprobe_duration'])
 	start_times = [0] + combined_df['end_time'].tolist()
 	combined_df['start_time'] = start_times[0:(len(start_times) - 1)]
 
@@ -155,7 +222,7 @@ def process_session(data_basepath, session, trim_videos = False, expected_number
 	# get the unique frame timestamps
 	get_frame_ts_for_video(output_video_path)
 
-	print('Time difference: '+str(round(abs(get_duration(output_video_path) - participant_videos_df.tail(1).iloc[0].end_time), 3))+' seconds')
+	print('Time difference: '+str(round(abs(get_duration(output_video_path, 'ffprobe') - participant_videos_df.tail(1).iloc[0].end_time), 3))+' seconds')
 	
 
 def main(args):
