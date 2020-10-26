@@ -40,7 +40,7 @@ def validate_annots(annots, label_options):
 def translate_ms_to_mm_ss(ms):
     '''translate a time in ms to a time mm:ss.dd which is easier to look up in ELAN or other video editing software'''
     s = ms / 1000
-    r_m = math.floor(s / 60.)
+    r_m = int(math.floor(s / 60.))
     r_s = s - (r_m * 60.)
 
     return(str(r_m).zfill(2)+':'+str(int(r_s)).zfill(2)+'.'+str(round(r_s - int(r_s), 3)).replace('0.',''))
@@ -85,7 +85,7 @@ def validate_frames(processed_frames_df):
     #could also check if frames follow requirements for transitions (i.e. transition frames must be between left and right labeled frames)
     participant_videos = processed_frames_df.loc[(processed_frames_df.type == 'participant video')]
     no_missing_data = participant_videos.loc[participant_videos.label != 'missing']
-    proportion_complete = no_missing_data.shape[0] / participant_videos.shape[0]
+    proportion_complete = no_missing_data.shape[0] / float(participant_videos.shape[0])
     print("Proportion of frames labeled: "+str(round(proportion_complete, 4)))
     if proportion_complete < .98:
         raise ValueError('Insufficient proportion of frames have been labeled. At least 98% of frames must be labeled to pass validation.')
@@ -100,7 +100,7 @@ def get_frame_ts_for_video(time_path):
     frames['frame_index'] = range(1, frames.shape[0]+1) # this should match with the frame-by-frame output
     return(frames)
 
-def process_eaf(eaf_path, session_id, label_options):
+def process_eaf(eaf_path, session_id, label_options, args):
     '''Get a table representation of the default tier labels from an EAF'''
     annots = get_annots(eaf_path, label_options)
     
@@ -117,31 +117,36 @@ def process_eaf(eaf_path, session_id, label_options):
     trial_times['end_time_ms']= trial_times.end_time * 1000
     trial_times['trial'] = [os.path.basename(x).split('_')[2] for x in trial_times.file]
 
+
     # get a label for each frame
     labels = get_labels_for_frames(annots, frames, trial_times)
 
-    # adjust the times so that 0 is stimulus onset in each case
-    frame_event_data_original_path = glob.glob(os.path.join(str(os.path.dirname(eaf_path)).replace('lookit_data/'+session_id+'/processed', 'lookit_frame_data'), '*'+session_id+'_frames.csv'))
-    if len(frame_event_data_original_path) > 1:
-        print(frame_event_data_original_path)
-        raise ValueError('More than one frame event found for '+session_id)
-    elif len(frame_event_data_original_path) == 0:
-        raise ValueError('No frame event data found for '+session_id)
+    if args.validate:
+        return(labels)
     else:
-        frame_event_data_original_path = frame_event_data_original_path[0]
+        # adjust the time if not validate
+        # adjust the times so that 0 is stimulus onset in each case
+        frame_event_data_original_path = glob.glob(os.path.join(str(os.path.dirname(eaf_path)).replace('lookit_data/'+session_id+'/processed', 'lookit_frame_data'), '*'+session_id+'_frames.csv'))
+        if len(frame_event_data_original_path) > 1:
+            print(frame_event_data_original_path)
+            raise ValueError('More than one frame event found for '+session_id)
+        elif len(frame_event_data_original_path) == 0:
+            raise ValueError('No frame event data found for '+session_id)
+        else:
+            frame_event_data_original_path = frame_event_data_original_path[0]
 
-    lookit_frame_filename = os.path.basename(frame_event_data_original_path)
-    frame_event_new_path = os.path.join(str(os.path.dirname(eaf_path)).replace('processed','frame_events'), session_id+'_frames.csv')
-    shutil.copy(frame_event_data_original_path, frame_event_new_path)
+        lookit_frame_filename = os.path.basename(frame_event_data_original_path)
+        frame_event_new_path = os.path.join(str(os.path.dirname(eaf_path)).replace('processed','frame_events'), session_id+'_frames.csv')
+        shutil.copy(frame_event_data_original_path, frame_event_new_path)
 
-    shutil.copy(frame_event_data_original_path, frame_event_new_path)
-    
-    frame_events = read_frame_events(frame_event_new_path)
+        shutil.copy(frame_event_data_original_path, frame_event_new_path)    
+        frame_events = read_frame_events(frame_event_new_path)
 
-    time_normalized_labels = normalize_label_times(labels, trial_times, frame_events)
-    return(time_normalized_labels)
+        time_normalized_labels = normalize_label_times(labels, trial_times, frame_events)
+        return(time_normalized_labels)
 
 def splitDFByCols(df, cols):
+    '''split a dataframe into dataframes addressable by key cols'''
     gb = df.groupby(cols)   
     rdict = {}
     for group in gb.groups:
@@ -232,7 +237,8 @@ def main(args):
 
     if args.validate and args.extract_stills:
         raise ValueError('Stills cannot be extracted during a validation check. Remove either --validate or --extract_stills')
-
+    if args.doublecode:
+         raise NotImplementedError
     if args.session is None:
         if args.validate:
             print('Validating all EAF transcriptions in'+os.path.join(args.data_basepath,'lookit_data'))            
@@ -264,7 +270,7 @@ def main(args):
             os.makedirs(dir_to_create)
 
     for eaf_file in filenames:
-        df = process_eaf(eaf_file, args.session, label_options)
+        df = process_eaf(eaf_file, args.session, label_options, args)
         
         if not args.validate:
             df.to_csv(eaf_file.replace('.eaf','.csv'), index=False) # formerly gaze_codes.csv
@@ -276,13 +282,7 @@ def main(args):
         if args.extract_stills:
             extract_stills_for_frames(eaf_file, regenerate=False)
 
-    print('Complete!')
-
-    # if args.doublecode:
-    #     filenames  = [x for x in filenames if 'doublecode' in x]
-    # else:
-    #     filenames  = [x for x in filenames if 'doublecode' not in x]
-    
+    print('Success! Annotations successfully parsed for session '+args.session)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Sample labels for unique frames from an ELAN-tagged EAF file...')
