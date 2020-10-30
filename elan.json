@@ -1,0 +1,283 @@
+{
+  "title": "Single letter to code in ELAN",
+  "rules": [
+    {
+      "description": "r -> right",
+      "manipulators": [
+        {
+          "from": {
+            "key_code": "r"
+          },
+          "to": [
+            {
+              "key_code": "b",
+              "modifiers": ["command"]
+            },
+            {
+              "key_code": "r"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "g"
+            },
+            {
+              "key_code": "h"
+            },
+            {
+              "key_code": "t"
+            },
+            {
+              "key_code": "return_or_enter"
+            }            
+          ],
+          "type": "basic"
+        }
+      ]
+    },
+    {
+      "description": "l -> left",
+      "manipulators": [
+        {
+          "from": {
+            "key_code": "l"
+          },
+          "to": [
+            {
+              "key_code": "b",
+              "modifiers": ["command"]
+            },
+            {
+              "key_code": "l"
+            },
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "f"
+            },
+            {
+              "key_code": "t"
+            },
+            {
+              "key_code": "return_or_enter"
+            }
+          ],
+          "type": "basic"
+        }
+      ]
+    },
+    {
+      "description": "c -> center",
+      "manipulators": [
+        {
+          "from": {
+            "key_code": "c"
+          },
+          "to": [
+            {
+              "key_code": "b",
+              "modifiers": ["command"]
+            },
+            {
+              "key_code": "c"
+            },
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "t"
+            },
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "r"
+            },
+            {
+              "key_code": "return_or_enter"
+            }
+          ],
+          "type": "basic"
+        }
+      ]
+    },
+    {
+      "description": "a -> away",
+      "manipulators": [
+        {
+          "from": {
+            "key_code": "a"
+          },
+          "to": [
+            {
+              "key_code": "b",
+              "modifiers": ["command"]
+            },
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "w"
+            },
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "y"
+            },
+            {
+              "key_code": "return_or_enter"
+            }
+          ],
+          "type": "basic"
+        }
+      ]
+    },
+    {
+      "description": "t -> transition",
+      "manipulators": [
+        {
+          "from": {
+            "key_code": "t"
+          },
+          "to": [
+            {
+              "key_code": "b",
+              "modifiers": ["command"]
+            },
+            {
+              "key_code": "t"
+            },
+            {
+              "key_code": "r"
+            },
+            {
+              "key_code": "a"
+            },
+            {
+              "key_code": "n"
+            },            
+            {
+              "key_code": "s"
+            },
+            {
+              "key_code": "i"
+            },
+            {
+              "key_code": "t"
+            },
+            {
+              "key_code": "i"
+            },  
+            {
+              "key_code": "o"
+            },
+            {
+              "key_code": "n"
+            },
+            {
+              "key_code": "return_or_enter"
+            }
+          ],
+          "type": "basic"
+        }
+      ]
+    },
+     {
+      "description": "e -> eyes closed",
+      "manipulators": [
+        {
+          "from": {
+            "key_code": "e"
+          },
+          "to": [
+            {
+              "key_code": "b",
+              "modifiers": ["command"]
+            },
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "y"
+            },
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "s"
+            },            
+            {
+              "key_code": "spacebar"
+            },
+            {
+              "key_code": "c"
+            },
+            {
+              "key_code": "l"
+            },
+            {
+              "key_code": "o"
+            },  
+            {
+              "key_code": "s"
+            },
+            {
+              "key_code": "e"
+            },
+            {
+              "key_code": "d"
+            },
+            {
+              "key_code": "return_or_enter"
+            }
+          ],
+          "type": "basic"
+        }
+      ]
+    },
+     {
+      "description": "b -> blurry",
+      "manipulators": [
+        {
+          "from": {
+            "key_code": "b"
+          },
+          "to": [
+            {
+              "key_code": "b",
+              "modifiers": ["command"]
+            },
+            {
+              "key_code": "b"
+            },
+            {
+              "key_code": "l"
+            },
+            {
+              "key_code": "u"
+            },
+            {
+              "key_code": "r"
+            },            
+            {
+              "key_code": "r"
+            },
+            {
+              "key_code": "y"
+            },
+            {
+              "key_code": "return_or_enter"
+            }
+          ],
+          "type": "basic"
+        }
+      ]
+    }
+  ]
+}

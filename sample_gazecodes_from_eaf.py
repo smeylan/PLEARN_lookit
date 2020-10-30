@@ -45,10 +45,23 @@ def translate_ms_to_mm_ss(ms):
 
     return(str(r_m).zfill(2)+':'+str(int(r_s)).zfill(2)+'.'+str(round(r_s - int(r_s), 3)).replace('0.',''))
 
-def get_labels_for_frames(annots, frames, trial_times):
+def get_labels_for_frames(annots, frames, trial_times, sample_fps = None):
     '''Get a label from annots for each frame in frames, and associate with a trial'''
 
     processed_frames = []
+
+    if sample_fps:
+        # get a label every (1/sample_fps) ms
+        frame_interval_ms = 1 / float(sample_fps) * 1000
+        latest = int(np.floor(np.max(frames.ms) / frame_interval_ms) * frame_interval_ms)
+
+        frames = pd.DataFrame({'ms':np.arange(0, latest+frame_interval_ms, frame_interval_ms)})
+        frames['index'] = range(1, frames.shape[0]+1)
+    else:
+        pass
+        # get a label for every unique frame, leave frames as the df that was passed in 
+
+
     for frame in frames.to_dict('records'):
 
         trial = trial_times.loc[(trial_times.start_time_ms <= frame['ms']) & \
@@ -102,13 +115,14 @@ def get_frame_ts_for_video(time_path):
 
 def process_eaf(eaf_path, session_id, label_options, args):
     '''Get a table representation of the default tier labels from an EAF'''
-    annots = get_annots(eaf_path, label_options)
     
+    annots = get_annots(eaf_path, label_options)
+        
     time_paths = glob.glob(os.path.join(os.path.dirname(eaf_path),'*.time'))
     if len(time_paths) > 1:
         raise ValueError('More than one time file found at '+basepath(eaf_path))
     else:
-        frames = get_frame_ts_for_video(time_paths[0])
+        frames = get_frame_ts_for_video(time_paths[0])        
 
     trial_times_paths = glob.glob(os.path.join(os.path.dirname(eaf_path),'*'+session_id+'*.csv')) # need a way to capture this w/o the output csv
     trial_times_paths = [x for x in trial_times_paths if '_' not in os.path.basename(x)] # underscore in output csv but not the originial timing csv
@@ -116,16 +130,17 @@ def process_eaf(eaf_path, session_id, label_options, args):
     trial_times['start_time_ms']= trial_times.start_time * 1000
     trial_times['end_time_ms']= trial_times.end_time * 1000
     trial_times['trial'] = [os.path.basename(x).split('_')[2] for x in trial_times.file]
-
-
-    # get a label for each frame
-    labels = get_labels_for_frames(annots, frames, trial_times)
-
+    
+    
     if args.validate:
-        return(labels)
+        # note that in validation we don't adjust for frame events
+        frame_labels = get_labels_for_frames(annots, frames, trial_times)
+        return(frame_labels, None)
     else:
-        # adjust the time if not validate
-        # adjust the times so that 0 is stimulus onset in each case
+        #a djust by frame events first, then do temporal resampling
+
+        # adjust the times so that 0 is stimulus onset in frames, trial_times, and annots
+
         frame_event_data_original_path = glob.glob(os.path.join(str(os.path.dirname(eaf_path)).replace('lookit_data/'+session_id+'/processed', 'lookit_frame_data'), '*'+session_id+'_frames.csv'))
         if len(frame_event_data_original_path) > 1:
             print(frame_event_data_original_path)
@@ -141,9 +156,18 @@ def process_eaf(eaf_path, session_id, label_options, args):
 
         shutil.copy(frame_event_data_original_path, frame_event_new_path)    
         frame_events = read_frame_events(frame_event_new_path)
+        
+        print('Sampling labels for true frames...')
+        frame_labels = get_labels_for_frames(annots, frames, trial_times)
+        
+        print('Sampling labels for pseudoframes (resampling)...')
+        resampled_timepoint_labels = get_labels_for_frames(annots, frames, trial_times, sample_fps = args.fps)
+        
+        time_normalized_labels = normalize_label_times(frame_labels, trial_times, frame_events)
 
-        time_normalized_labels = normalize_label_times(labels, trial_times, frame_events)
-        return(time_normalized_labels)
+        normalized_resampled_timepoint_labels = normalize_label_times(resampled_timepoint_labels, trial_times, frame_events, args.fps)
+
+        return(time_normalized_labels, normalized_resampled_timepoint_labels)
 
 def splitDFByCols(df, cols):
     '''split a dataframe into dataframes addressable by key cols'''
@@ -186,7 +210,7 @@ def read_frame_events(frame_events_path):
     #tds_by_event = splitDFByCols(timing_data_short, ['frame_id'])
     return(frame_event_timings)
 
-def normalize_label_times(labels, trial_times, frame_events):
+def normalize_label_times(labels, trial_times, frame_events, sample_fps = None):
     '''get the start time for all trials and compute the time in ms with respect to video start (not stimulus onset, which requires the actual stimuli timings; this is done in the analysis stack)'''
     
     # first, normalize so that the start of each video is 0, using the trial start times in trial_times
@@ -198,7 +222,12 @@ def normalize_label_times(labels, trial_times, frame_events):
     # second, normalize so that 0 is the stimulus onset, using the timings in the frame_events
     labels_with_video_start_time = labels_with_start_time.merge(frame_events[['frame_id', 'seconds_recording_before_stim']], left_on='trial', right_on='frame_id') 
     
-    labels_with_video_start_time['normalized_ms'] = labels_with_video_start_time['normalized_ms'] - 1000 *(labels_with_video_start_time['seconds_recording_before_stim'])
+    if sample_fps is None:
+        labels_with_video_start_time['normalized_ms'] =   labels_with_video_start_time['normalized_ms'] - 1000 *(labels_with_video_start_time['seconds_recording_before_stim'])
+    else: 
+        # snap time offset to closest fps offset        
+
+        labels_with_video_start_time['normalized_ms'] =     labels_with_video_start_time['normalized_ms'] - round((1000 *labels_with_video_start_time['seconds_recording_before_stim']) / sample_fps) * sample_fps
     
     return(labels_with_video_start_time)
 
@@ -263,17 +292,17 @@ def main(args):
             os.makedirs(dir_to_create)
 
     # make directories in which to place the labeled frames
-    label_options = ('lost', 'frozen', 'away', 'eyes closed', 'left', 'right', 'center', 'no child', 'transition') 
+    label_options = ('lost', 'frozen', 'away', 'eyes closed', 'left', 'right', 'center', 'no child', 'transition', 'blurry') 
     for dir in list(label_options) + ['temp', 'interstitial','missing','multiple']: #temp is where ffmpeg will write stuff; interstitial is for the inter-video labels
         dir_to_create = os.path.join(args.data_basepath, 'lookit_data', args.session, 'video_frames', dir)
         if not os.path.exists(dir_to_create):
             os.makedirs(dir_to_create)
 
     for eaf_file in filenames:
-        df = process_eaf(eaf_file, args.session, label_options, args)
+        frame_labels, resampled_frame_labels = process_eaf(eaf_file, args.session, label_options, args)
         
         if not args.validate:
-            df.to_csv(eaf_file.replace('.eaf','.csv'), index=False) # formerly gaze_codes.csv
+            resampled_frame_labels.to_csv(eaf_file.replace('.eaf','.csv'), index=False) # formerly gaze_codes.csv
             print("Gaze codes .csv written to "+eaf_file.replace('.eaf','.csv'))
         else:
             print("Validation flag is set, not writing gaze code file...")
@@ -281,6 +310,7 @@ def main(args):
         # get an image for every timeslice, put it in "frames"
         if args.extract_stills:
             extract_stills_for_frames(eaf_file, regenerate=False)
+
 
     print('Success! Annotations successfully parsed for session '+args.session)
 
@@ -303,6 +333,11 @@ if __name__ == '__main__':
     parser.add_argument('--doublecode',                       
                            action='store_true',
                            help='If sampling from an eaf doing double-coding, then include this flag so that the script checks for completion on double-coded trials only')
+
+    parser.add_argument('--fps',
+                        type=int,                       
+                        action='store',                        
+                        help='Number of labels per second')
     args = parser.parse_args()
 
 
