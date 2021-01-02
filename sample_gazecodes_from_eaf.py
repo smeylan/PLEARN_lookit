@@ -269,17 +269,18 @@ def main(args):
     if args.doublecode:
          raise NotImplementedError
     if args.session is None:
+        raise ValueError('file path search is out of date')
         if args.validate:
             print('Validating all EAF transcriptions in'+os.path.join(args.data_basepath,'lookit_data'))            
         else:  
             print('Processing all EAF transcriptions in'+os.path.join(args.data_basepath,'lookit_data'))
 
-        filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data',  '*','processed','*.eaf'))        
+        filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'.eaf'))        
         raise NotImplementedError("Need to think about how to retrieve all of the session_ids")
 
 
     else:
-        filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data',  args.session,'processed','*.eaf'))        
+        filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'.eaf'))        
         if args.validate:
             print('Validating EAF transcriptions:')           
         else:
