@@ -3,12 +3,21 @@ import pandas as pd
 import numpy as np
 import copy
 
-input_lookit_json_path = '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/lookit/lookit_videotrials.json'
-output_lookit_json_path = '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/lookit/lookit_generated_videotrials.json'
-practice_trials_path = '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/lookit/practice_items.csv'
-test_trials_path = '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/lookit/group1_book_test_ordered.csv'
-# receptive_trials_path = '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/lookit/plearn_receptiveTask_datasource.csv'
+
+# order 1
+input_lookit_json_path = 'lookit_videotrials.json'
+output_lookit_json_path = 'lookit_generated_videotrials.json'
+practice_trials_path = 'practice_items.csv'
+test_trials_path = 'group1_book_test_ordered.csv'
 order = "1"
+
+# order 2
+# input_lookit_json_path = 'lookit_videotrials.json'
+# output_lookit_json_path = 'lookit_generated_videotrials.json'
+# practice_trials_path = 'practice_items.csv'
+# test_trials_path = 'group2_book_test_ordered.csv'
+# # receptive_trials_path = '/Users/stephanmeylan/Nextcloud2/MIT/PLEARN/lookit/plearn_receptiveTask_datasource.csv'
+# order = "2"
 
 
 with open(input_lookit_json_path) as f:
@@ -168,9 +177,14 @@ storybook_trial['parentTextBlock']['text'] = "The end! Great job!"
 generated_trials.append(copy.deepcopy(storybook_trial))
 data['frames']['storybook-plearn']['frameList'] = generated_trials
 
+json_string = json.dumps(data)
+
+if order == "2":
+	#update all of the order1 paths to order2
+	json_string = json_string.replace('order1', 'order2')
 
 with open(output_lookit_json_path, 'w') as f:
-	json.dump(data, f)
+	f.write(json_string)	
 
 
 # [x] get the title frame in

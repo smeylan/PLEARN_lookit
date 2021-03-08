@@ -46,7 +46,7 @@
             "kind": "exp-lookit-video-consent",
             "PIName": "Dr. Elika Bergelson",
             "datause": "We are interested in what your child knows about basic grammatical rules in the English language, both what they say as well as what they seem to understand. A research assistant will watch the videos recorded from the first part of the experiment as your child looks at different objects onscreen; another will review the recording from when you and your child read the storybook together and annotate what your child said in response to questions you ask them.",
-            "payment": "After you finish the study, we will email you a $10 Amazon gift card within a week. To be eligible for the gift card your child must be in the age range for this study, you need to submit a valid consent statement, and we need to see that there is a child with you. But we will send a gift card even if you do not finish the whole study or we are not able to use your child's data! There are no other direct benefits to you or your child from participating, but we hope you will enjoy the experience.",
+            "payment": "After you finish the study, we will email you a $5 Amazon gift card within a week. To be eligible for the gift card your child must be in the age range for this study, you need to submit a valid consent statement, and we need to see that there is a child with you. But we will send a gift card even if you do not finish the whole study or we are not able to use your child's data! There are no other direct benefits to you or your child from participating, but we hope you will enjoy the experience.",
             "purpose": "This study looks at what children between two and three years old know about basic grammatical distinctions in English.",
             "PIContact": "Dr. Stephan Meylan (on behalf of Dr. Bergelson) 727 278 1398",
             "procedures": "In this study, you and your child will view a series of videos, about 12 minutes long in total, where a speaker in the video will name new and familiar objects that will appear onscreen. Then you will read a 'storybook' to your child which has more new and familiar objects. For both parts, LookIt will record both video and audio through your web broswer. There will be more specific instructions for each portion of the study. There are no anticipated risks associated with participating.",
@@ -119,35 +119,34 @@
             "displayFullscreenOverride": true
         },   
         "sample-calibration-trial": {
-            "kind": "exp-lookit-composite-video-trial",
-            "isLast": false,
-            "baseDir": "https://umzy19bu4.ddns.net/plearn/order1/",
-            "sources": "16",
-            "testCount": 1,
-            "altSources": "16",            
-            "pauseAudio": "pause",
+            "kind": "exp-lookit-calibration",
+            "baseDir": "https://umzy19bu4.ddns.net/plearn/order1/", 
+            "audioTypes": [
+              "ogg",
+              "mp3"
+            ],  
             "videoTypes": [
                 "webm",
-                "mp4"
-            ],           
-            "startRecordingAutomatically": true,  
-            "attnSources": "attentiongrabber",            
-            "musicSources": "16",
-            "unpauseAudio": "return_after_pause",
-            "announceLength": 0,
-            "backgroundColor": "black",
-            "calibrationLength": 3000,
-            "calibrationAudioSources": "chimes",
-            "calibrationVideoSources": "attentiongrabber",
+                "mp4"],
+            "requiredDuration": 0,  
+            "requireVideoCount": 0, 
+            "requireAudioCount": 0,     
+            "doRecording": true, 
+            "pauseVideo": "attentiongrabber",
+            "pauseAudio": "pause",
+            "unpauseAudio": "return_after_pause",   
+
+            "calibrationLength": 3000, 
+            "calibrationAudio": "chimes",
+            "calibrationVideo": "attentiongrabber", 
             "maxUploadSeconds": 120
         },             
         "sample-intermodal-trial-2": {
             "kind": "exp-lookit-video",
             "video": {
               "loop": false,
-              "source": "16",
-              "left": 0,
-              "width": 100
+              "source": "16",              
+              "position": "fill"
             },
             "requiredDuration": 0,
             "requireAudioCount": 0,
@@ -174,9 +173,8 @@
             "kind": "exp-lookit-video",
             "video": {
               "loop": false,
-              "source": "5",
-              "left": 0,
-              "width": 100
+              "source": "5",              
+              "position": "fill"
             },
             "requiredDuration": 0,
             "requireAudioCount": 0,
@@ -458,9 +456,7 @@
                         {
                             "id": "storybookIllustration",
                             "src": "10_cow_0.png",
-                            "top": 0,
-                            "left": 0,
-                            "height": 100
+                            "position":"fill"                            
                         }
                     ],
                     "parentTextBlock": {
@@ -476,9 +472,7 @@
                         {
                             "id": "storybookIllustration",
                             "src": "10_cow_1.png",
-                            "top": 0,
-                            "left": 0,
-                            "height": 100
+                            "position":"fill"                            
                         }
                     ],
                     "parentTextBlock": {
@@ -659,7 +653,7 @@
         "exit-survey": {
             "kind": "exp-lookit-exit-survey",
             "debriefing": {
-                "text": "In this study, we look at what children know about the English singular and plural, for example dog vs. dogs, and cat vs. cats. While this is a common distinction made by adult speakers, as well as older children, when children first begin to understand this distinction is an important open question in child language research. Specifically, it is important because it is one of the first times that children learn to apply rules to words, including new words that they have never heard before. In this case, if an object is called 'a wug', then two of those things are called 'wugs'. While children end up learning many such rules, this may be the first one, so it is important to learn when they start to understand it in speech from others, as well as how they use it in their own speech.<br><br> Previous studies point to a surprising result:  English-learning children use the plural in their own speech (like in the storybook) before they 'understand' it -- that is, can successfully identify what a speaker is talking about (like in the videos here).  The key to this counter-intuitive result may be that children can use the plural to identify what a speaker is talking about  <i>only</i>  when there are other parts of the sentence that correspond to number ('there <b>are</b> <b>two</b> dogs'), and it might take them a while to learn that the presence of an 's' indicates the plural. This would mean that children are learning grammar first, then using that to learn the sound system! This is backwards from what researchers first thought (children learn sounds, then words, then grammar). If you want to watch a 5-minute scientific talk on a previous version of this experiment, look at this <a href=\"https://www.youtube.com/watch?v=pWF743dBlTI\" target=\"_blank\">YouTube video</a>. <br><br> Thanks again for your participation! We will email you a $10 Amazon gift card within one week of participation. To be eligible for the gift card your child must be in the age range for this study, you need to submit a valid consent statement, and we need to see that there is a child with you. But we will send a gift card even if you do not finish the whole study or we are not able to use your child's data!",
+                "text": "<b>Please make sure that you complete any additional surveys included in the email you received!</b><br /><br />In this study, we look at what children know about the English singular and plural, for example dog vs. dogs, and cat vs. cats. While this is a common distinction made by adult speakers, as well as older children, when children first begin to understand this distinction is an important open question in child language research. Specifically, it is important because it is one of the first times that children learn to apply rules to words, including new words that they have never heard before. In this case, if an object is called 'a wug', then two of those things are called 'wugs'. While children end up learning many such rules, this may be the first one, so it is important to learn when they start to understand it in speech from others, as well as how they use it in their own speech.<br><br> Previous studies point to a surprising result:  English-learning children use the plural in their own speech (like in the storybook) before they 'understand' it -- that is, can successfully identify what a speaker is talking about (like in the videos here).  The key to this counter-intuitive result may be that children can use the plural to identify what a speaker is talking about  <i>only</i>  when there are other parts of the sentence that correspond to number ('there <b>are</b> <b>two</b> dogs'), and it might take them a while to learn that the presence of an 's' indicates the plural. This would mean that children are learning grammar first, then using that to learn the sound system! This is backwards from what researchers first thought (children learn sounds, then words, then grammar). If you want to watch a 5-minute scientific talk on a previous version of this experiment, look at this <a href=\"https://www.youtube.com/watch?v=pWF743dBlTI\" target=\"_blank\">YouTube video</a>. <br><br> Thanks again for your participation! We will email you a $5 Amazon gift card within one week of participation. To be eligible for the gift card your child must be in the age range for this study, you need to submit a valid consent statement, and we need to see that there is a child with you. But we will send a gift card even if you do not finish the whole study or we are not able to use your child's data!",
                 "title": "Thank you!"
             },
             "showShareButton": false
