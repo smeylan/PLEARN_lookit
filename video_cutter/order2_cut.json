@@ -1,0 +1,32 @@
+[
+{
+	"type":"practice",
+	"filename_base": "p1",
+	"start_time": 35.35,
+	"stop_time": 40.299
+},
+{
+	"type":"practice",
+	"filename_base": "p2",
+	"start_time": 41.359,
+	"stop_time": 46.347
+},
+{
+	"type":"practice",
+	"filename_base": "p3",
+	"start_time": 48.065,
+	"stop_time": 53.05
+},
+{
+	"type":"practice",
+	"filename_base": "p4",
+	"start_time": 54.24,
+	"stop_time": 59.24
+},
+{
+	"type":"test",
+	"start_time": 61.0668,
+	"pretrial_duration": 1.278,
+	"trial_duration": 9.96,
+	"num_trials": 32
+}]
