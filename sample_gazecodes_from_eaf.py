@@ -12,7 +12,13 @@ def get_annots(eaf_path, label_options):
     '''Get annoations from the EAF '''
     print('Processing '+eaf_path)
     eaf = pympi.Elan.Eaf(eaf_path)
-    annots = pd.DataFrame(eaf.tiers['default'][0].values())
+    if 'gaze codes' in eaf.tiers.keys():
+        print('Gaze codes are in the "gaze codes" tier')
+        annots = pd.DataFrame(eaf.tiers['gaze codes'][0].values())
+    else:
+        print('Gaze codes are in the "default" tier')
+        annots = pd.DataFrame(eaf.tiers['default'][0].values())
+    
     annots = annots.rename(columns = {0:'start_ms', 1: 'end_ms', 2:'label', 3:'drop'})
     annots = annots.drop(labels = 'drop', axis=1)    
     annots.start_ms = [eaf.timeslots[x] for x in annots.start_ms]    
@@ -20,13 +26,13 @@ def get_annots(eaf_path, label_options):
     annots['start_time'] = [translate_ms_to_mm_ss(x) for x in annots.start_ms]
     annots['end_time'] = [translate_ms_to_mm_ss(x) for x in annots.end_ms]
     annots = annots.sort_values(by='start_ms')
+    annots['label'] = [x.lower() for x in annots['label']]
     annots.index = [x+1 for x in annots.index]
     validate_annots(annots, label_options)
     return(annots)
 
 def validate_annots(annots, label_options):
     '''Confirm all codes are in the set of acceptable codes'''
-
     invalid_annots = annots.loc[~annots.label.isin(label_options)]
 
     if invalid_annots.shape[0] > 0:
@@ -45,7 +51,7 @@ def translate_ms_to_mm_ss(ms):
 
     return(str(r_m).zfill(2)+':'+str(int(r_s)).zfill(2)+'.'+str(round(r_s - int(r_s), 3)).replace('0.',''))
 
-def get_labels_for_frames(annots, frames, trial_times, sample_fps = None):
+def get_labels_for_frames(annots, frames, trial_times, args, sample_fps = None):
     '''Get a label from annots for each frame in frames, and associate with a trial'''
 
     processed_frames = []
@@ -89,12 +95,15 @@ def get_labels_for_frames(annots, frames, trial_times, sample_fps = None):
                 frame['label'] = 'multiple'
                 frame['type'] = 'participant video'
             processed_frames.append(frame)
-    processed_frames_df = pd.DataFrame(processed_frames)
-    if validate_frames(processed_frames_df):
+    processed_frames_df = pd.DataFrame(processed_frames)    
+    if validate_frames(processed_frames_df, args):
         return(processed_frames_df)
 
-def validate_frames(processed_frames_df):
+def validate_frames(processed_frames_df, args):    
     '''check if a sufficient number of frames have been labeled'''
+    if args.doublecode:
+        return(True)
+
     #could also check if frames follow requirements for transitions (i.e. transition frames must be between left and right labeled frames)
     participant_videos = processed_frames_df.loc[(processed_frames_df.type == 'participant video')]
     no_missing_data = participant_videos.loc[participant_videos.label != 'missing']
@@ -124,9 +133,16 @@ def process_eaf(eaf_path, session_id, label_options, args):
     else:
         frames = get_frame_ts_for_video(time_paths[0])        
 
-    trial_times_paths = glob.glob(os.path.join(os.path.dirname(eaf_path),'*'+session_id+'*.csv')) # need a way to capture this w/o the output csv
-    trial_times_paths = [x for x in trial_times_paths if '_' not in os.path.basename(x)] # underscore in output csv but not the originial timing csv
-    trial_times = pd.read_csv(trial_times_paths[0])
+    if args.doublecode:
+        # read in a path with selected trials to code
+        doublecode_filename = os.path.join(args.data_basepath, 'lookit_data', args.session, 'processed', args.session+'_doublecode_list.csv')        
+        trial_times = pd.read_csv(doublecode_filename)
+    else:
+        # read in a path with all trials to code
+        trial_times_paths = glob.glob(os.path.join(os.path.dirname(eaf_path),'*'+session_id+'*.csv')) # need a way to capture this w/o the output csv
+        trial_times_paths = [x for x in trial_times_paths if '_' not in os.path.basename(x)] # underscore in output csv but not the originial timing csv
+        trial_times = pd.read_csv(trial_times_paths[0])
+    
     trial_times['start_time_ms']= trial_times.start_time * 1000
     trial_times['end_time_ms']= trial_times.end_time * 1000
     trial_times['trial'] = [os.path.basename(x).split('_')[2] for x in trial_times.file]
@@ -134,7 +150,7 @@ def process_eaf(eaf_path, session_id, label_options, args):
     
     if args.validate:
         # note that in validation we don't adjust for frame events
-        frame_labels = get_labels_for_frames(annots, frames, trial_times)
+        frame_labels = get_labels_for_frames(annots, frames, trial_times, args)
         return(frame_labels, None)
     else:
         #a djust by frame events first, then do temporal resampling
@@ -158,10 +174,10 @@ def process_eaf(eaf_path, session_id, label_options, args):
         frame_events = read_frame_events(frame_event_new_path)
         
         print('Sampling labels for true frames...')
-        frame_labels = get_labels_for_frames(annots, frames, trial_times)
+        frame_labels = get_labels_for_frames(annots, frames, trial_times, args)
         
         print('Sampling labels for pseudoframes (resampling)...')
-        resampled_timepoint_labels = get_labels_for_frames(annots, frames, trial_times, sample_fps = args.fps)
+        resampled_timepoint_labels = get_labels_for_frames(annots, frames, trial_times, args, sample_fps = args.fps)
         
         time_normalized_labels = normalize_label_times(frame_labels, trial_times, frame_events)
 
@@ -266,8 +282,7 @@ def main(args):
 
     if args.validate and args.extract_stills:
         raise ValueError('Stills cannot be extracted during a validation check. Remove either --validate or --extract_stills')
-    if args.doublecode:
-         raise NotImplementedError
+
     if args.session is None:
         raise ValueError('file path search is out of date')
         if args.validate:
@@ -275,12 +290,31 @@ def main(args):
         else:  
             print('Processing all EAF transcriptions in'+os.path.join(args.data_basepath,'lookit_data'))
 
-        filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'.eaf'))        
+        if args.coder is not None:
+            if args.doublecode:
+                import pdb; pdb.set_trace()
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', args.coder+'_'+args.session+'_doublecode.eaf'))
+            else:
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', args.coder+'_'+args.session+'.eaf'))
+        else:
+            if args.doublecode:
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'_doublecode.eaf'))        
+            else:
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'.eaf'))        
         raise NotImplementedError("Need to think about how to retrieve all of the session_ids")
 
 
     else:
-        filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'.eaf'))        
+        if args.coder is not None:
+            if args.doublecode:
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', args.coder+'_'+args.session+'_doublecode.eaf'))        
+            else:
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', args.coder+'_'+args.session+'.eaf'))        
+        else: 
+            if args.doublecode:
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'_doublecode.eaf'))        
+            else:  
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'.eaf'))        
         if args.validate:
             print('Validating EAF transcriptions:')           
         else:
@@ -293,18 +327,22 @@ def main(args):
             os.makedirs(dir_to_create)
 
     # make directories in which to place the labeled frames
-    label_options = ('lost', 'frozen', 'away', 'eyes closed', 'left', 'right', 'center', 'no child', 'transition', 'blurry') 
+    label_options = ('lost', 'frozen', 'away', 'eyes closed', 'left', 'right', 'center', 'missing child', 'transition', 'blurry') 
     for dir in list(label_options) + ['temp', 'interstitial','missing','multiple']: #temp is where ffmpeg will write stuff; interstitial is for the inter-video labels
         dir_to_create = os.path.join(args.data_basepath, 'lookit_data', args.session, 'video_frames', dir)
         if not os.path.exists(dir_to_create):
             os.makedirs(dir_to_create)
 
-    for eaf_file in filenames:
+    for eaf_file in filenames[::-1]:
         frame_labels, resampled_frame_labels = process_eaf(eaf_file, args.session, label_options, args)
         
         if not args.validate:
-            resampled_frame_labels.to_csv(eaf_file.replace('.eaf','.csv'), index=False) # formerly gaze_codes.csv
-            print("Gaze codes .csv written to "+eaf_file.replace('.eaf','.csv'))
+            if args.doublecode:
+                resampled_frame_labels.to_csv(eaf_file.replace('.eaf','_doublecode_list.csv'), index=False) # formerly gaze_codes.csv
+                print("Gaze codes .csv (double coded trials only) written to "+eaf_file.replace('.eaf','.csv'))
+            else:
+                resampled_frame_labels.to_csv(eaf_file.replace('.eaf','.csv'), index=False) # formerly gaze_codes.csv
+                print("Gaze codes .csv (all trials) written to "+eaf_file.replace('.eaf','.csv'))
         else:
             print("Validation flag is set, not writing gaze code file...")
 
@@ -325,6 +363,10 @@ if __name__ == '__main__':
                            action='store',
                            type=str,
                            help='The session identifier under lookit-data to process. If unspecified, then all sessions in `lookit_data` will be processed.')
+    parser.add_argument('--coder',                       
+                           action='store',
+                           type=str,
+                           help='The coder to process, as specified by a 2 or 3 digit identifier. If unspecified, then all coders will be processed.')
     parser.add_argument('--validate',                       
                            action='store_true',
                            help='If this is a validation run, run the checks but do not output a file for gaze codes')
