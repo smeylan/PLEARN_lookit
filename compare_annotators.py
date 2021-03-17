@@ -12,9 +12,11 @@ import matplotlib.pyplot as plt
 
 def plot_confusion_matrix(y_true, 
                         y_pred,
-                          target_names,
-                          plot_filename, 
-                          title='Confusion matrix',
+                          target_names,                          
+                          annotator_name,
+                          gold_tagger,                         
+                          plot_filename,  
+                          title='Confusion matrix (rows sum to 1)',
                           cmap=None,
                           normalize=True):
     """
@@ -84,8 +86,8 @@ def plot_confusion_matrix(y_true,
 
 
     plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(accuracy, misclass))
+    plt.ylabel('Gold standard label ('+gold_tagger+')')
+    plt.xlabel('Annotator label ('+annotator_name+')\naccuracy={:0.4f}; misclass={:0.4f}'.format(accuracy, misclass))
     plt.savefig(plot_filename)
 
 def main(args):   
@@ -118,7 +120,7 @@ def main(args):
             f1 = f1_score(merged.label, merged.gold_label, average='weighted')
             ck = cohen_kappa_score(merged.label, merged.gold_label)
             score_store.append({'f1': f1, 'ck': ck, 'annotator': annotator_name, 'gold':args.gold_tagger})                        
-            plot_confusion_matrix(merged.gold_label, merged.label, np.unique(merged.gold_label), plot_filename = annotator_name+'_confusion_matrix.png')
+            plot_confusion_matrix(merged.gold_label, merged.label, np.unique(merged.gold_label), annotator_initial, args.gold_tagger, plot_filename = annotator_name+'_confusion_matrix.png')
 
     score_df = pd.DataFrame(score_store)
     print('Scores: ')
