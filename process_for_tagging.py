@@ -8,7 +8,7 @@ import argparse
 import tempfile
 import warnings
 
-# usage python3 process_for_tagging.py --data_basepath ~/dropbox/Documents/MIT/research/PLEARN/lookit_data --session 4a038470-3533-4c2c-80bb-77fb2f6ed333 --buffervideo ~/dropbox/Documents/MIT/research/PLEARN/video_cutter/white_2s.mp4
+# usage python3 process_for_tagging.py --data_basepath ~/dropbox/Documents/MIT/research/PLEARN --session 4a038470-3533-4c2c-80bb-77fb2f6ed333 --buffervideo ~/dropbox/Documents/MIT/research/PLEARN/video_cutter/white_2s.mp4
 
 def change_fps(input_filename, fps, regenerate = False):	
 	output_filename = input_filename.replace('/raw/','/fps_matched/')	

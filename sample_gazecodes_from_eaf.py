@@ -31,6 +31,14 @@ def get_annots(eaf_path, label_options):
     validate_annots(annots, label_options)
     return(annots)
 
+def retrieve_trial_index(filename):
+        pieces = os.path.basename(filename).split('_')
+        if len(pieces) > 2:
+            trial = pieces[2]
+            return(trial)
+        else:
+            return(None)
+
 def validate_annots(annots, label_options):
     '''Confirm all codes are in the set of acceptable codes'''
     invalid_annots = annots.loc[~annots.label.isin(label_options)]
@@ -79,7 +87,9 @@ def get_labels_for_frames(annots, frames, trial_times, args, sample_fps = None):
             processed_frames.append(frame)
         else:
             # get a trial identifier from the trial times for each frame
-            frame['trial'] = os.path.basename(trial.iloc[0].file).split('_')[2]
+            frame['trial'] = retrieve_trial_index(
+                os.path.basename(trial.iloc[0].file))
+
 
             frame_annotations = annots.loc[(annots.start_ms <= frame['ms']) & \
                 (annots.end_ms > frame['ms'])] #if a frame falls on an annotation boundary, it gets grouped with the interval that starts at that time
@@ -109,8 +119,8 @@ def validate_frames(processed_frames_df, args):
     no_missing_data = participant_videos.loc[participant_videos.label != 'missing']
     proportion_complete = no_missing_data.shape[0] / float(participant_videos.shape[0])
     print("Proportion of frames labeled: "+str(round(proportion_complete, 4)))
-    if proportion_complete < .98:
-        raise ValueError('Insufficient proportion of frames have been labeled. At least 98% of frames must be labeled to pass validation.')
+    if proportion_complete < .97:
+        raise ValueError('Insufficient proportion of frames have been labeled. At least 97% of frames must be labeled to pass validation.')
     else:
         print('File has a sufficient number of frames labeled!')
         return (True)
@@ -145,7 +155,11 @@ def process_eaf(eaf_path, session_id, label_options, args):
     
     trial_times['start_time_ms']= trial_times.start_time * 1000
     trial_times['end_time_ms']= trial_times.end_time * 1000
-    trial_times['trial'] = [os.path.basename(x).split('_')[2] for x in trial_times.file]
+    
+
+
+    trial_times['trial'] = [retrieve_trial_index(x) for x in trial_times.file]
+    trial_times = trial_times.loc[trial_times.type == 'participant_recording']
     
     
     if args.validate:
@@ -284,7 +298,8 @@ def main(args):
         raise ValueError('Stills cannot be extracted during a validation check. Remove either --validate or --extract_stills')
 
     if args.session is None:
-        raise ValueError('file path search is out of date')
+        raise ValueError('Better to run processsing session-by-session')
+        
         if args.validate:
             print('Validating all EAF transcriptions in'+os.path.join(args.data_basepath,'lookit_data'))            
         else:  
@@ -293,16 +308,14 @@ def main(args):
         if args.coder is not None:
             if args.doublecode:
                 import pdb; pdb.set_trace()
-                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', args.coder+'_'+args.session+'_doublecode.eaf'))
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data/*/processed', args.coder+'_'+args.session+'_doublecode.eaf'))
             else:
-                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', args.coder+'_'+args.session+'.eaf'))
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data/*/processed', args.coder+'_'+args.session+'.eaf'))
         else:
             if args.doublecode:
-                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'_doublecode.eaf'))        
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data/*/processed', '*_doublecode.eaf'))        
             else:
-                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data', args.session ,'processed', '*'+args.session+'.eaf'))        
-        raise NotImplementedError("Need to think about how to retrieve all of the session_ids")
-
+                filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data/*/processed', '*.eaf'))
 
     else:
         if args.coder is not None:
@@ -321,17 +334,21 @@ def main(args):
             print('Processing EAF transcriptions:')
         print(filenames)
 
+    if len(filenames) == 0:
+        raise ValueError('No files found for session. Are you sure the annotations files are present?')
+
     for dir in ['video_frames', 'frame_events']:
         dir_to_create = os.path.join(args.data_basepath, 'lookit_data', args.session, dir)
         if not os.path.exists(dir_to_create):
             os.makedirs(dir_to_create)
 
     # make directories in which to place the labeled frames
-    label_options = ('lost', 'frozen', 'away', 'eyes closed', 'left', 'right', 'center', 'missing child', 'transition', 'blurry') 
+    label_options = ('lost', 'frozen', 'away', 'eyes closed', 'left', 'right', 'center', 'missing child', 'missing data', 'transition', 'blurry') 
     for dir in list(label_options) + ['temp', 'interstitial','missing','multiple']: #temp is where ffmpeg will write stuff; interstitial is for the inter-video labels
         dir_to_create = os.path.join(args.data_basepath, 'lookit_data', args.session, 'video_frames', dir)
         if not os.path.exists(dir_to_create):
             os.makedirs(dir_to_create)
+
 
     for eaf_file in filenames[::-1]:
         frame_labels, resampled_frame_labels = process_eaf(eaf_file, args.session, label_options, args)
