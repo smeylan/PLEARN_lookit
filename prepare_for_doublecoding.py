@@ -11,8 +11,25 @@ def main(args):
     
     NUM_TRIALS_TO_SAMPLE = 4
 
-    trials_file = os.path.join(args.data_basepath, 'lookit_data', args.session, 'processed', args.session+'.csv')
-    trials_df = pd.read_csv(trials_file)
+    if args.session is not None:
+        # process a single specified session
+        prepare_session_for_doublecoding(args.data_basepath, args.session, NUM_TRIALS_TO_SAMPLE)
+    else:        
+        # list all sessions in lookit_data and process them
+        data_root = os.path.join(args.data_basepath, 'lookit_data')        
+        sessions  = os.listdir(data_root)
+
+        # process each session
+        for session in sessions:
+            prepare_session_for_doublecoding(args.data_basepath, session, NUM_TRIALS_TO_SAMPLE)
+
+def prepare_session_for_doublecoding(data_basepath, session, NUM_TRIALS_TO_SAMPLE):   
+    trials_file = os.path.join(data_basepath, 'lookit_data', session, 'processed', session+'.csv')
+    try:
+        trials_df = pd.read_csv(trials_file)
+    except:
+        print('No trials file found for '+session)
+        return
 
     test_trials_df = trials_df.loc[trials_df.file.str.contains('test-normal')]
     selected_trials = test_trials_df.sample(NUM_TRIALS_TO_SAMPLE)
@@ -24,6 +41,8 @@ def main(args):
         print('Processing complete!')
     else:
         print('Selected trials file already exists at '+selected_trials_file+'. Delete it first and run again.')
+
+    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Select test trials for double coding')

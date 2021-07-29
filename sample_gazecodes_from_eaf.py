@@ -26,7 +26,7 @@ def get_annots(eaf_path, label_options):
     annots['start_time'] = [translate_ms_to_mm_ss(x) for x in annots.start_ms]
     annots['end_time'] = [translate_ms_to_mm_ss(x) for x in annots.end_ms]
     annots = annots.sort_values(by='start_ms')
-    annots['label'] = [x.lower() for x in annots['label']]
+    annots['label'] = [x.lower().strip() for x in annots['label']]
     annots.index = [x+1 for x in annots.index]
     validate_annots(annots, label_options)
     return(annots)
@@ -145,8 +145,8 @@ def process_eaf(eaf_path, session_id, label_options, args):
 
     if args.doublecode:
         # read in a path with selected trials to code
-        doublecode_filename = os.path.join(args.data_basepath, 'lookit_data', args.session, 'processed', args.session+'_doublecode_list.csv')        
-        trial_times = pd.read_csv(doublecode_filename)
+        doublecode_trials_filename = os.path.join(args.data_basepath, 'lookit_data', args.session, 'processed', args.session+'_doublecode_list.csv')        
+        trial_times = pd.read_csv(doublecode_trials_filename)
     else:
         # read in a path with all trials to code
         trial_times_paths = glob.glob(os.path.join(os.path.dirname(eaf_path),'*'+session_id+'*.csv')) # need a way to capture this w/o the output csv
@@ -307,7 +307,6 @@ def main(args):
 
         if args.coder is not None:
             if args.doublecode:
-                import pdb; pdb.set_trace()
                 filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data/*/processed', args.coder+'_'+args.session+'_doublecode.eaf'))
             else:
                 filenames = glob.glob(os.path.join(args.data_basepath,'lookit_data/*/processed', args.coder+'_'+args.session+'.eaf'))
@@ -355,7 +354,7 @@ def main(args):
         
         if not args.validate:
             if args.doublecode:
-                resampled_frame_labels.to_csv(eaf_file.replace('.eaf','_doublecode_list.csv'), index=False) # formerly gaze_codes.csv
+                resampled_frame_labels.to_csv(eaf_file.replace('.eaf','.csv'), index=False) # formerly gaze_codes.csv
                 print("Gaze codes .csv (double coded trials only) written to "+eaf_file.replace('.eaf','.csv'))
             else:
                 resampled_frame_labels.to_csv(eaf_file.replace('.eaf','.csv'), index=False) # formerly gaze_codes.csv
